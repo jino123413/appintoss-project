@@ -1,4 +1,4 @@
-import { defineConfig } from '@apps-in-toss/web-framework/config';
+﻿import { defineConfig } from '@apps-in-toss/web-framework/config';
 
 export default defineConfig({
   appName: 'teto-egen',
@@ -14,7 +14,7 @@ export default defineConfig({
   outdir: 'dist',
   brand: {
     displayName: '넌 테토야 에겐이야',
-    icon: 'https://raw.githubusercontent.com/jino123413/app-logos/master/teto-egen.png',
+    icon: 'https://jino123413.github.io/appintoss-project/logo.png',
     primaryColor: '#007779',
     bridgeColorMode: 'basic',
   },
