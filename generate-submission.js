@@ -39,8 +39,9 @@ const apps = [
   { name: 'dream-interpret', displayName: '간밤의 꿈', color: '#1A1B4B', icon: 'https://raw.githubusercontent.com/jino123413/app-logos/master/dream-interpret.png', desc: '간밤에 꾼 꿈, 수정구슬이 읽어줄게', captions: ['꿈 내용을 자유롭게 적어보세요', '수정구슬이 꿈을 해석하고 있어요', '성운 맵으로 꿈의 상징을 한눈에'], landscapeLayout: 'tilted-single' },
   { name: 'daily-idiom', displayName: '오늘의 사자성어', color: '#B91C1C', icon: 'https://raw.githubusercontent.com/jino123413/app-logos/master/daily-idiom.png', desc: '하루 한 문제, 사자성어 도감', captions: ['오늘의 두루마리를 펼쳐보세요', '한자 빈칸에 정답을 채워보세요', '인장함에 사자성어를 수집하세요'], landscapeLayout: 'triple-fan' },
   { name: 'menu-today', displayName: '밥심', color: '#F10803', icon: 'https://raw.githubusercontent.com/jino123413/app-logos/master/menu-today.png', desc: '오늘 뭐 먹지? 조건만 골라봐', captions: ['7가지 조건으로 딱 맞는 메뉴를 추천받으세요', '추천 결과와 대안 메뉴를 한 번에 확인', '기록·즐겨찾기로 나만의 메뉴 스타일을 정리'], landscapeLayout: 'triple-fan' },
-  { name: 'hangul-word-chain', displayName: '한글 끝말잇기', color: '#0EA5A4', icon: 'https://raw.githubusercontent.com/jino123413/app-logos/master/hangul-word-chain.png', desc: '혼자서 즐기는 한글 끝말잇기', captions: ['오늘의 시작 단어로 끝말잇기를 시작하세요', '단어를 이어 기록과 수집을 쌓아보세요', '게임 종료 후 AD 이어하기로 한 번 더 도전'], landscapeLayout: 'flow-story' },
+  { name: 'hangul-word-chain', displayName: '한글 끝말잇기', color: '#155E75', icon: 'https://raw.githubusercontent.com/jino123413/app-logos/master/hangul-word-chain.png', desc: '릴레이 트랙으로 이어가는 끝말잇기', captions: ['구간 1: 현재 글자로 단어를 연결하세요', '구간 2: 상대 응답과 다음 목표를 확인하세요', '구간 3: 종료 후 AD 이어하기로 한 번 더 도전'], landscapeLayout: 'flow-story' },
   { name: 'teto-egen', displayName: '넌 테토야 에겐이야', color: '#0F766E', icon: 'https://raw.githubusercontent.com/jino123413/app-logos/master/teto-egen.png', desc: '오늘의 테토·에겐 결을 분석해요', captions: ['이름과 3문항으로 오늘의 성향 분석', '지층 단면으로 테토·에겐 축을 확인', '심층 리포트로 오늘의 결을 더 자세히'], landscapeLayout: 'flow-story' },
+  { name: 'today-quote', displayName: '오늘의 명대사', color: '#2F6B62', icon: 'https://raw.githubusercontent.com/jino123413/app-logos/master/today-quote.png', desc: '매일 명대사 한 줄', captions: ['오늘의 명대사를 감성 카드로 확인하세요', '좋아한 문장을 내 명대사북에 저장해요', '30일 연속 방문으로 히든 명대사를 해금'], landscapeLayout: 'spotlight' },
   ];
 
 // --- Color utilities ---
