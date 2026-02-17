@@ -1,0 +1,57 @@
+﻿name: Deploy Teto Egen to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'teto-egen/**'
+      - '.github/workflows/deploy-teto-egen-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-teto-egen
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: teto-egen/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: teto-egen
+
+      - name: Build web bundle
+        run: npm run build
+        working-directory: teto-egen
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: teto-egen/dist/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
