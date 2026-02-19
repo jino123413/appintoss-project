@@ -1,0 +1,16 @@
+﻿[Unit]
+Description=Pyeonhye Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/pyeonhye-backend/pyeonhye-backend
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/pyeonhye-backend/pyeonhye-backend/.env
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

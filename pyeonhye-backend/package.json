@@ -1,0 +1,37 @@
+{
+    "name":  "pyeonhye-backend",
+    "version":  "0.1.0",
+    "private":  true,
+    "description":  "Weekly convenience-store offer scraping backend for ?명삙",
+    "main":  "dist/server.js",
+    "scripts":  {
+                    "dev":  "tsx watch src/server.ts",
+                    "build":  "tsc -p tsconfig.json",
+                    "start":  "node dist/server.js",
+                    "migrate":  "knex migrate:latest --knexfile knexfile.js",
+                    "migrate:rollback":  "knex migrate:rollback --knexfile knexfile.js",
+                    "typecheck":  "tsc --noEmit -p tsconfig.json",
+                    "crawl:check":  "playwright test scripts/playwright/brand-render.spec.ts --project=chromium --reporter=list",
+                    "ux:capture":  "playwright test scripts/playwright/ux-flow.spec.ts --project=chromium --reporter=list"
+                },
+    "engines":  {
+                    "node":  "\u003e=20.0.0"
+                },
+    "dependencies":  {
+                         "@fastify/cors":  "^10.0.1",
+                         "cheerio":  "^1.0.0",
+                         "dotenv":  "^16.4.5",
+                         "fastify":  "^4.28.1",
+                         "knex":  "^3.1.0",
+                         "luxon":  "^3.5.0",
+                         "node-cron":  "^4.0.0",
+                         "pg":  "^8.13.1"
+                     },
+    "devDependencies":  {
+                            "@types/luxon":  "^3.4.2",
+                            "@types/node":  "^22.10.2",
+                            "tsx":  "^4.19.2",
+                            "typescript":  "^5.7.2",
+                            "@playwright/test":  "^1.51.1"
+                        }
+}

@@ -1,0 +1,291 @@
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { env } from "../config";
+import {
+  getBrandCounts,
+  getOfferById,
+  getRefreshMeta,
+  isDatabaseReachable,
+  listOffers,
+  type OfferListParams,
+} from "../db/offersRepository";
+import { isBrand, isPromoType, type Brand, type PromoType } from "../domain/offers";
+import type { ScrapeService } from "../services/scrapeService";
+
+interface OffersQuery {
+  brand?: string;
+  promoType?: string;
+  q?: string;
+  page?: string;
+  limit?: string;
+  sort?: string;
+}
+
+interface OfferParams {
+  id: string;
+}
+
+type PromoDisplayType = "1+1" | "2+1" | "DISCOUNT";
+
+function parsePositiveInt(input: string | undefined, fallback: number, min: number, max: number): number {
+  const parsed = Number(input);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  const rounded = Math.floor(parsed);
+  if (rounded < min) {
+    return min;
+  }
+  if (rounded > max) {
+    return max;
+  }
+
+  return rounded;
+}
+
+function extractBearerToken(authorization?: string): string {
+  if (!authorization || !authorization.startsWith("Bearer ")) {
+    return "";
+  }
+
+  return authorization.slice("Bearer ".length).trim();
+}
+
+function toPromoDisplayType(promoType: PromoType): PromoDisplayType {
+  if (promoType === "ONE_PLUS_ONE") {
+    return "1+1";
+  }
+
+  if (promoType === "TWO_PLUS_ONE") {
+    return "2+1";
+  }
+
+  return "DISCOUNT";
+}
+
+function parsePromoTypeAlias(rawPromoType?: string): PromoType | undefined | null {
+  if (!rawPromoType) {
+    return undefined;
+  }
+
+  const rawToken = rawPromoType.trim();
+  if (!rawToken) {
+    return undefined;
+  }
+
+  const upper = rawToken.toUpperCase();
+  if (isPromoType(upper)) {
+    return upper;
+  }
+
+  const compact = upper.replace(/[\s_-]/g, "");
+  if (compact === "1+1" || compact === "ONEPLUSONE") {
+    return "ONE_PLUS_ONE";
+  }
+
+  if (compact === "2+1" || compact === "TWOPLUSONE") {
+    return "TWO_PLUS_ONE";
+  }
+
+  if (compact === "DISCOUNT" || compact === "SALE") {
+    return "DISCOUNT";
+  }
+
+  if (compact === "GIFT") {
+    return "GIFT";
+  }
+
+  if (compact === "EVENT") {
+    return "EVENT";
+  }
+
+  if (compact === "UNKNOWN") {
+    return "UNKNOWN";
+  }
+
+  return null;
+}
+
+function parseSort(rawSort?: string): OfferListParams["sort"] | null {
+  if (!rawSort) {
+    return "latest";
+  }
+
+  const normalized = rawSort.trim().toLowerCase();
+  if (!normalized) {
+    return "latest";
+  }
+
+  if (normalized === "latest" || normalized === "oldest") {
+    return normalized;
+  }
+
+  if (normalized === "popular" || normalized === "hot") {
+    return "popular";
+  }
+
+  if (normalized === "price_asc" || normalized === "priceasc" || normalized === "price-low" || normalized === "price_low") {
+    return "price_asc";
+  }
+
+  if (normalized === "price_desc" || normalized === "pricedesc" || normalized === "price-high" || normalized === "price_high") {
+    return "price_desc";
+  }
+
+  return null;
+}
+
+export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeService): void {
+  app.get("/health", async (_request, reply) => {
+    const dbHealthy = await isDatabaseReachable();
+    if (!dbHealthy) {
+      return reply.status(503).send({
+        status: "error",
+        database: "unreachable",
+        now: new Date().toISOString()
+      });
+    }
+
+    return reply.send({
+      status: "ok",
+      database: "reachable",
+      now: new Date().toISOString()
+    });
+  });
+
+  app.get("/v1/brands", async () => {
+    const brands = await getBrandCounts();
+    return { brands };
+  });
+
+  app.get("/v1/meta/refresh", async () => {
+    const meta = await getRefreshMeta();
+    return {
+      ...meta,
+      inMemoryLastRun: scrapeService.getLastRun()
+    };
+  });
+
+  app.get("/promos", async (request: FastifyRequest<{ Querystring: OffersQuery }>, reply: FastifyReply) => {
+    const rawBrand = request.query.brand?.trim().toUpperCase();
+    let brand: Brand | undefined;
+
+    if (rawBrand) {
+      if (!isBrand(rawBrand)) {
+        return reply.status(400).send({
+          message: "Invalid brand. Allowed: CU, GS25, SEVEN, EMART24"
+        });
+      }
+      brand = rawBrand;
+    }
+
+    const promoType = parsePromoTypeAlias(request.query.promoType);
+    if (promoType === null) {
+      return reply.status(400).send({
+        message: "Invalid promoType. Allowed: 1+1, 2+1, DISCOUNT, ONE_PLUS_ONE, TWO_PLUS_ONE, GIFT, EVENT, UNKNOWN"
+      });
+    }
+
+    const sort = parseSort(request.query.sort);
+    if (sort === null) {
+      return reply.status(400).send({
+        message: "Invalid sort. Allowed: latest, oldest, popular, price_asc, price_desc"
+      });
+    }
+
+    const q = request.query.q?.trim() || undefined;
+    const result = await listOffers({
+      brand,
+      promoType: promoType ?? undefined,
+      q,
+      page: 1,
+      limit: 5000,
+      sort
+    });
+
+    return reply.send({
+      items: result.items.map((offer) => ({
+        id: offer.id,
+        name: offer.title,
+        brand: offer.brand,
+        promoType: toPromoDisplayType(offer.promoType),
+        note: offer.description,
+        price: offer.price,
+        originalPrice: offer.originalPrice,
+        imageUrl: offer.imageUrl,
+        sourceUrl: offer.sourceUrl,
+        updatedAt: offer.scrapedAt
+      })),
+      total: result.total,
+      refreshedAt: result.items[0]?.scrapedAt ?? null
+    });
+  });
+
+  app.get("/v1/offers", async (request: FastifyRequest<{ Querystring: OffersQuery }>, reply: FastifyReply) => {
+    const rawBrand = request.query.brand?.trim().toUpperCase();
+    let brand: Brand | undefined;
+    let promoType: PromoType | undefined;
+
+    if (rawBrand) {
+      if (!isBrand(rawBrand)) {
+        return reply.status(400).send({
+          message: "Invalid brand. Allowed: CU, GS25, SEVEN, EMART24"
+        });
+      }
+      brand = rawBrand;
+    }
+
+    const normalizedPromoType = parsePromoTypeAlias(request.query.promoType);
+    if (normalizedPromoType === null) {
+      return reply.status(400).send({
+        message: "Invalid promoType. Allowed: ONE_PLUS_ONE, TWO_PLUS_ONE, DISCOUNT, GIFT, EVENT, UNKNOWN"
+      });
+    }
+    promoType = normalizedPromoType;
+
+    const sort = parseSort(request.query.sort);
+    if (sort === null) {
+      return reply.status(400).send({
+        message: "Invalid sort. Allowed: latest, oldest, popular, price_asc, price_desc"
+      });
+    }
+
+    const page = parsePositiveInt(request.query.page, 1, 1, 1000000);
+    const limit = parsePositiveInt(request.query.limit, 20, 1, 100);
+    const q = request.query.q?.trim() || undefined;
+
+    const result = await listOffers({
+      brand,
+      promoType,
+      q,
+      page,
+      limit,
+      sort
+    });
+
+    return reply.send(result);
+  });
+
+  app.get("/v1/offers/:id", async (request: FastifyRequest<{ Params: OfferParams }>, reply: FastifyReply) => {
+    const offer = await getOfferById(request.params.id);
+    if (!offer) {
+      return reply.status(404).send({ message: "Offer not found" });
+    }
+
+    return reply.send(offer);
+  });
+
+  app.post("/v1/admin/scrape", async (request: FastifyRequest, reply: FastifyReply) => {
+    if (!env.adminBearerToken) {
+      return reply.status(503).send({ message: "ADMIN_BEARER_TOKEN is not configured" });
+    }
+
+    const token = extractBearerToken(request.headers.authorization);
+    if (!token || token !== env.adminBearerToken) {
+      return reply.status(401).send({ message: "Unauthorized" });
+    }
+
+    const result = await scrapeService.refreshOffers("manual");
+    return reply.send({ ok: true, result });
+  });
+}

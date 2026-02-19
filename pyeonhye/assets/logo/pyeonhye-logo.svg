@@ -1,0 +1,10 @@
+﻿<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="편혜 로고">
+  <rect width="1024" height="1024" fill="#0EA5A4"/>
+  <g transform="translate(286 256)">
+    <rect x="0" y="0" width="452" height="512" rx="64" fill="#FFFFFF"/>
+    <polygon points="328,0 452,0 452,124" fill="#0EA5A4"/>
+    <circle cx="92" cy="112" r="30" fill="#0EA5A4"/>
+    <rect x="196" y="262" width="176" height="36" rx="18" fill="#0EA5A4"/>
+    <rect x="266" y="192" width="36" height="176" rx="18" fill="#0EA5A4"/>
+  </g>
+</svg>
