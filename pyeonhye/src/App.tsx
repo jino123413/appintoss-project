@@ -540,6 +540,8 @@ export default function App() {
     });
   };
 
+  const showCompareEntryAdHint = !compareEntryAdShown;
+
   return (
     <div className="min-h-screen bg-slate-50 font-gmarket text-slate-900" style={{ minHeight: 'var(--min-height, 100vh)' }}>
       <DeviceViewport />
@@ -632,12 +634,18 @@ export default function App() {
               type="button"
               onClick={() => openMainTab(tab.key)}
               data-testid={`tab-${tab.key}`}
-              className={`rounded-xl px-2 py-2 text-sm font-semibold ${activeTab === tab.key ? 'bg-teal-600 text-white' : 'text-slate-600'}`}
+              className={`inline-flex items-center justify-center gap-1 rounded-xl px-2 py-2 text-sm font-semibold ${activeTab === tab.key ? 'bg-teal-600 text-white' : 'text-slate-600'}`}
             >
               {tab.label}
+              {tab.key === 'compare' && showCompareEntryAdHint ? (
+                <span className="rounded bg-slate-900 px-1 py-0.5 text-[10px] text-white">AD</span>
+              ) : null}
             </button>
           ))}
         </nav>
+        {showCompareEntryAdHint ? (
+          <p className="px-1 text-[11px] text-slate-400">비교 탭 첫 진입은 광고 시청 후 열립니다.</p>
+        ) : null}
 
         {loading || bookmarkLoading ? (
           <section className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
@@ -672,6 +680,7 @@ export default function App() {
 
         {!loading && !error && activeTab === 'compare' ? (
           <section className="space-y-3" data-testid="panel-compare">
+            <p className="px-1 text-[11px] text-slate-400">비교 상세는 광고 시청 후 열립니다.</p>
             {compareGroups.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
                 비교 가능한 동일 상품이 아직 없습니다.
@@ -748,6 +757,7 @@ export default function App() {
                 <span className="rounded bg-slate-900 px-1 py-0.5 text-[10px] text-white">AD</span>
               </button>
             </div>
+            <p className="px-1 text-[11px] text-slate-400">갱신 체크는 광고 시청 후 실행됩니다.</p>
 
             {bookmarkCheckMessage ? (
               <p className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
