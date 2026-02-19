@@ -7,7 +7,7 @@ export const AD_GROUP_ID = rawAdGroupId && rawAdGroupId.length > 0
 
 export const BOOKMARK_STORAGE_KEY = 'pyeonhye:bookmarks';
 
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() || 'http://localhost:3000';
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() || 'http://165.232.168.243';
 export const API_BASE_URL = rawApiBaseUrl.replace(/\/$/, '');
 
 export const BRAND_TABS: BrandTab[] = ['ALL', 'CU', 'GS25', 'SEVEN', 'EMART24'];
