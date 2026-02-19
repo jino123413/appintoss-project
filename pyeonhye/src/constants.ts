@@ -3,7 +3,7 @@
 const rawAdGroupId = import.meta.env.VITE_AD_GROUP_ID?.trim();
 export const AD_GROUP_ID = rawAdGroupId && rawAdGroupId.length > 0
   ? rawAdGroupId
-  : 'ait-ad-test-interstitial-id';
+  : 'ait.v2.live.012aa2a0d0b84229';
 
 export const BOOKMARK_STORAGE_KEY = 'pyeonhye:bookmarks';
 
