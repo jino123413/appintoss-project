@@ -42,7 +42,20 @@
 - Concurrent p95 latency: `-40.19%`
 - Throughput (RPS): `+82.43%`
 
+## TTL A/B (30s vs 45s)
+- Method: same query (`/promos?sort=popular`) with a 35-second gap between call #1 and call #2.
+- Environment: production server (`https://165.232.168.243.nip.io`), service restarted before each case.
+
+| Case | Call #1 latency | Call #2 latency | Cache stats after 2 calls |
+|---|---:|---:|---|
+| TTL=30000 | 505.48ms | 522.98ms | `hit=0`, `miss=2`, `stale=1`, `write=2`, `hitRate=0%` |
+| TTL=45000 | 501.45ms | 445.56ms | `hit=1`, `miss=1`, `stale=0`, `write=1`, `hitRate=50%` |
+
+Decision:
+- Keep default as `PROMOS_CACHE_TTL_MS=45000`.
+- Reason: better cache retention for realistic short revisit patterns without meaningful freshness risk (scrape lifecycle is weekly/manual).
+
 ## Notes
 - This optimization is strongest for repeated identical list queries (`brand + promoType + q + sort`) during burst traffic.
 - Cache is cleared after successful `POST /v1/admin/scrape`.
-- Future step: add cache hit ratio metric to `/v1/meta/refresh` for long-run production tracking.
+- Cache hit/miss metrics are now exposed in `/v1/meta/refresh > promosCache`.

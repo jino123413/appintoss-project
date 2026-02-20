@@ -33,7 +33,7 @@ export const env = {
   corsOrigin: process.env.CORS_ORIGIN ?? "*",
   databaseUrl: process.env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5432/pyeonhye",
   adminBearerToken: process.env.ADMIN_BEARER_TOKEN ?? "",
-  promosCacheTtlMs: parseNumber(process.env.PROMOS_CACHE_TTL_MS, 30000),
+  promosCacheTtlMs: parseNumber(process.env.PROMOS_CACHE_TTL_MS, 45000),
   schedulerEnabled: parseBoolean(process.env.SCHEDULER_ENABLED, true),
   scrapeHttpTimeoutMs: parseNumber(process.env.SCRAPE_HTTP_TIMEOUT_MS, 15000),
   scrapeMaxItems: parseNumber(process.env.SCRAPE_MAX_ITEMS, 120),

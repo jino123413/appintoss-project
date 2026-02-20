@@ -55,7 +55,7 @@ Supported `sort`:
 ## `/promos` Cache
 
 - Env key: `PROMOS_CACHE_TTL_MS`
-- Default: `30000` (30s)
+- Default: `45000` (45s)
 - Behavior: in-memory response cache by `(brand, promoType, q, sort)` key
 - Invalidation: cache clears after successful `POST /v1/admin/scrape`
 - Metrics: `GET /v1/meta/refresh` returns `promosCache` stats (`hitCount`, `missCount`, `hitRatePercent`, `entries`, ...)
