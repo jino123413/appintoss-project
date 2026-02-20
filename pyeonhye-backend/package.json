@@ -12,7 +12,8 @@
                     "migrate:rollback":  "knex migrate:rollback --knexfile knexfile.js",
                     "typecheck":  "tsc --noEmit -p tsconfig.json",
                     "crawl:check":  "playwright test scripts/playwright/brand-render.spec.ts --project=chromium --reporter=list",
-                    "ux:capture":  "playwright test scripts/playwright/ux-flow.spec.ts --project=chromium --reporter=list"
+                    "ux:capture":  "playwright test scripts/playwright/ux-flow.spec.ts --project=chromium --reporter=list",
+                    "perf:collect": "tsx scripts/perf/collect-scrape-metrics.ts"
                 },
     "engines":  {
                     "node":  "\u003e=20.0.0"

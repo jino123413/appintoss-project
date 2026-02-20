@@ -82,6 +82,23 @@ npm run ux:capture
 
 Details: `docs/scrape-playwright-ops.md`
 
+## Performance (Portfolio)
+
+```bash
+npm run perf:collect
+```
+
+External HTTPS benchmark example:
+
+```bash
+PERF_BASE_URL=https://165.232.168.243.nip.io npm run perf:collect
+```
+
+See:
+- `docs/performance-bmad-playbook.md`
+- `docs/performance-storyline.md`
+- `docs/performance-metrics.md`
+
 ## Deploy
 
 See: `deploy/DO_DROPLET_SETUP.md`
