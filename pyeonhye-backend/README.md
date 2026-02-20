@@ -52,6 +52,13 @@ Supported `sort`:
 - Multiple origins: comma-separated
   - Example: `CORS_ORIGIN=http://localhost:8081,https://my-app.example.com`
 
+## `/promos` Cache
+
+- Env key: `PROMOS_CACHE_TTL_MS`
+- Default: `30000` (30s)
+- Behavior: in-memory response cache by `(brand, promoType, q, sort)` key
+- Invalidation: cache clears after successful `POST /v1/admin/scrape`
+
 ## Weekly Scheduler
 
 - Cron: Monday 06:00 (Asia/Seoul)

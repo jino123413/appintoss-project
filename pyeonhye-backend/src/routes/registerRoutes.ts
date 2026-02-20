@@ -26,6 +26,30 @@ interface OfferParams {
 
 type PromoDisplayType = "1+1" | "2+1" | "DISCOUNT";
 
+interface PromosResponseItem {
+  id: string;
+  name: string;
+  brand: Brand;
+  promoType: PromoDisplayType;
+  note: string | undefined;
+  price: number | undefined;
+  originalPrice: number | undefined;
+  imageUrl: string | undefined;
+  sourceUrl: string | undefined;
+  updatedAt: string;
+}
+
+interface PromosResponse {
+  items: PromosResponseItem[];
+  total: number;
+  refreshedAt: string | null;
+}
+
+interface PromosCacheEntry {
+  expiresAt: number;
+  payload: PromosResponse;
+}
+
 function parsePositiveInt(input: string | undefined, fallback: number, min: number, max: number): number {
   const parsed = Number(input);
   if (!Number.isFinite(parsed)) {
@@ -135,7 +159,18 @@ function parseSort(rawSort?: string): OfferListParams["sort"] | null {
   return null;
 }
 
+function buildPromosCacheKey(params: {
+  brand?: Brand;
+  promoType?: PromoType;
+  q?: string;
+  sort: OfferListParams["sort"];
+}): string {
+  return [params.brand ?? "", params.promoType ?? "", params.q ?? "", params.sort].join("|");
+}
+
 export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeService): void {
+  const promosCache = new Map<string, PromosCacheEntry>();
+
   app.get("/health", async (_request, reply) => {
     const dbHealthy = await isDatabaseReachable();
     if (!dbHealthy) {
@@ -194,6 +229,25 @@ export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeServic
     }
 
     const q = request.query.q?.trim() || undefined;
+    const cacheTtlMs = env.promosCacheTtlMs;
+    const cacheKey = buildPromosCacheKey({
+      brand,
+      promoType: promoType ?? undefined,
+      q: q?.toLowerCase(),
+      sort
+    });
+
+    if (cacheTtlMs > 0) {
+      const now = Date.now();
+      const cached = promosCache.get(cacheKey);
+      if (cached && cached.expiresAt > now) {
+        return reply.send(cached.payload);
+      }
+      if (cached) {
+        promosCache.delete(cacheKey);
+      }
+    }
+
     const result = await listOffers({
       brand,
       promoType: promoType ?? undefined,
@@ -203,7 +257,7 @@ export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeServic
       sort
     });
 
-    return reply.send({
+    const payload: PromosResponse = {
       items: result.items.map((offer) => ({
         id: offer.id,
         name: offer.title,
@@ -218,7 +272,16 @@ export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeServic
       })),
       total: result.total,
       refreshedAt: result.items[0]?.scrapedAt ?? null
-    });
+    };
+
+    if (cacheTtlMs > 0) {
+      promosCache.set(cacheKey, {
+        expiresAt: Date.now() + cacheTtlMs,
+        payload
+      });
+    }
+
+    return reply.send(payload);
   });
 
   app.get("/v1/offers", async (request: FastifyRequest<{ Querystring: OffersQuery }>, reply: FastifyReply) => {
@@ -286,6 +349,7 @@ export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeServic
     }
 
     const result = await scrapeService.refreshOffers("manual");
+    promosCache.clear();
     return reply.send({ ok: true, result });
   });
 }
