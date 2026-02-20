@@ -14,7 +14,7 @@ export default defineConfig({
   outdir: 'dist',
   brand: {
     displayName: '넌 테토야 에겐이야',
-    icon: 'https://raw.githubusercontent.com/jino123413/appintoss-project/main/teto-egen/assets/logo/teto-egen-logo-600.png',
+    icon: 'https://jino123413.github.io/teto-egen-hosting/teto-egen-logo-600.png',
     primaryColor: '#007779',
     bridgeColorMode: 'basic',
   },
