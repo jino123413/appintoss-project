@@ -58,6 +58,7 @@ Supported `sort`:
 - Default: `30000` (30s)
 - Behavior: in-memory response cache by `(brand, promoType, q, sort)` key
 - Invalidation: cache clears after successful `POST /v1/admin/scrape`
+- Metrics: `GET /v1/meta/refresh` returns `promosCache` stats (`hitCount`, `missCount`, `hitRatePercent`, `entries`, ...)
 
 ## Weekly Scheduler
 

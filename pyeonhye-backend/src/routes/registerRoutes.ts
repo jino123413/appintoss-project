@@ -50,6 +50,15 @@ interface PromosCacheEntry {
   payload: PromosResponse;
 }
 
+interface PromosCacheStats {
+  hitCount: number;
+  missCount: number;
+  staleCount: number;
+  writeCount: number;
+  clearCount: number;
+  lastClearedAt: string | null;
+}
+
 function parsePositiveInt(input: string | undefined, fallback: number, min: number, max: number): number {
   const parsed = Number(input);
   if (!Number.isFinite(parsed)) {
@@ -170,6 +179,20 @@ function buildPromosCacheKey(params: {
 
 export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeService): void {
   const promosCache = new Map<string, PromosCacheEntry>();
+  const promosCacheStats: PromosCacheStats = {
+    hitCount: 0,
+    missCount: 0,
+    staleCount: 0,
+    writeCount: 0,
+    clearCount: 0,
+    lastClearedAt: null
+  };
+
+  const clearPromosCache = () => {
+    promosCache.clear();
+    promosCacheStats.clearCount += 1;
+    promosCacheStats.lastClearedAt = new Date().toISOString();
+  };
 
   app.get("/health", async (_request, reply) => {
     const dbHealthy = await isDatabaseReachable();
@@ -195,9 +218,26 @@ export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeServic
 
   app.get("/v1/meta/refresh", async () => {
     const meta = await getRefreshMeta();
+    const totalLookups = promosCacheStats.hitCount + promosCacheStats.missCount;
+    const hitRate = totalLookups === 0
+      ? null
+      : Number(((promosCacheStats.hitCount / totalLookups) * 100).toFixed(2));
+
     return {
       ...meta,
-      inMemoryLastRun: scrapeService.getLastRun()
+      inMemoryLastRun: scrapeService.getLastRun(),
+      promosCache: {
+        enabled: env.promosCacheTtlMs > 0,
+        ttlMs: env.promosCacheTtlMs,
+        entries: promosCache.size,
+        hitCount: promosCacheStats.hitCount,
+        missCount: promosCacheStats.missCount,
+        staleCount: promosCacheStats.staleCount,
+        writeCount: promosCacheStats.writeCount,
+        clearCount: promosCacheStats.clearCount,
+        hitRatePercent: hitRate,
+        lastClearedAt: promosCacheStats.lastClearedAt
+      }
     };
   });
 
@@ -241,9 +281,12 @@ export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeServic
       const now = Date.now();
       const cached = promosCache.get(cacheKey);
       if (cached && cached.expiresAt > now) {
+        promosCacheStats.hitCount += 1;
         return reply.send(cached.payload);
       }
+      promosCacheStats.missCount += 1;
       if (cached) {
+        promosCacheStats.staleCount += 1;
         promosCache.delete(cacheKey);
       }
     }
@@ -279,6 +322,7 @@ export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeServic
         expiresAt: Date.now() + cacheTtlMs,
         payload
       });
+      promosCacheStats.writeCount += 1;
     }
 
     return reply.send(payload);
@@ -349,7 +393,7 @@ export function registerRoutes(app: FastifyInstance, scrapeService: ScrapeServic
     }
 
     const result = await scrapeService.refreshOffers("manual");
-    promosCache.clear();
+    clearPromosCache();
     return reply.send({ ok: true, result });
   });
 }
