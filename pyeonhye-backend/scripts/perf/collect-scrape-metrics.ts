@@ -174,11 +174,14 @@ async function main(): Promise<void> {
 
   console.log(`[perf] target=${targetUrl}`);
   console.log(
-    `[perf] sequential count=${sequential.count} avg=${sequential.avgMs}ms p50=${sequential.p50Ms}ms p95=${sequential.p95Ms}ms max=${sequential.maxMs}ms`,
+    `[perf] sequential count=${sequential.count} ok=${sequential.okCount} err=${sequential.errorCount} avg=${sequential.avgMs}ms p50=${sequential.p50Ms}ms p95=${sequential.p95Ms}ms max=${sequential.maxMs}ms`,
   );
   console.log(
-    `[perf] concurrent count=${concurrent.count} avg=${concurrent.avgMs}ms p50=${concurrent.p50Ms}ms p95=${concurrent.p95Ms}ms max=${concurrent.maxMs}ms rps=${throughputRps}`,
+    `[perf] concurrent count=${concurrent.count} ok=${concurrent.okCount} err=${concurrent.errorCount} avg=${concurrent.avgMs}ms p50=${concurrent.p50Ms}ms p95=${concurrent.p95Ms}ms max=${concurrent.maxMs}ms rps=${throughputRps}`,
   );
+  if (sequential.errorCount > 0 || concurrent.errorCount > 0) {
+    console.warn("[perf] warning=non-2xx responses or network failures detected; validate target health before comparing.");
+  }
   console.log(`[perf] output=${outPath}`);
 }
 

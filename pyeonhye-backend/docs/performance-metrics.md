@@ -1,60 +1,48 @@
-# 성능 측정 기록 (Baseline -> Improved)
+# Backend Performance Metrics (BMAD)
 
-## 측정 환경
-- 서버: DigitalOcean Ubuntu 22.04 (1 vCPU / 2GB)
-- API: `pyeonhye-backend`
-- 측정 대상: `/promos?limit=50`
-- 측정 방법: `npm run perf:collect` + 운영 서버 실측
+## Scope
+- Date: 2026-02-20
+- Endpoint: `/promos?sort=popular`
+- Target: `https://165.232.168.243.nip.io`
+- Tool: `npm run perf:collect`
+- Load profile: `PERF_REQUESTS=120`, `PERF_CONCURRENCY=20`
+- Success criteria for comparison: `okCount=120`, `errorCount=0`
 
-## Baseline (2026-02-20)
+## Before Optimization (No `/promos` cache)
+- Raw file: `test-results/perf/api-perf-2026-02-20T07-10-43-046Z.json`
+- Commit context: `608fed9` deployment line
 
-### 내부 직접 호출 (http://127.0.0.1:3000)
-| Metric | Value |
-|---|---|
-| avg | 21.2ms |
-| p50 | 18.6ms |
-| p95 | 34.3ms |
-| max | 60.5ms |
+| Metric | Sequential | Concurrent |
+|---|---:|---:|
+| avg latency | 399.18ms | 560.96ms |
+| p50 latency | 450.93ms | 515.14ms |
+| p95 latency | 479.35ms | 884.70ms |
+| max latency | 525.46ms | 1034.67ms |
+| throughput | - | 33.69 RPS |
+| errors | 0/120 | 0/120 |
 
-### 외부 HTTPS 호출 (https://165.232.168.243.nip.io)
-| Metric | Value |
-|---|---|
-| avg | 115.8ms |
-| p50 | 114.9ms |
-| p95 | 126.5ms |
-| max | 128.6ms |
+## After Optimization (`/promos` in-memory TTL cache)
+- Raw file: `test-results/perf/api-perf-2026-02-20T07-17-53-185Z.json`
+- Commit context: `5968139` deployment line
+- Cache config: `PROMOS_CACHE_TTL_MS=30000`
 
-### 간이 동시부하
-| Condition | Result |
-|---|---|
-| requests=200, concurrency=20 | ~29.7 RPS |
+| Metric | Sequential | Concurrent |
+|---|---:|---:|
+| avg latency | 377.77ms | 307.73ms |
+| p50 latency | 437.43ms | 232.78ms |
+| p95 latency | 466.23ms | 529.12ms |
+| max latency | 501.62ms | 566.53ms |
+| throughput | - | 61.46 RPS |
+| errors | 0/120 | 0/120 |
 
-## 자동 측정 스크립트 실행 로그
+## Delta (After vs Before)
+- Sequential avg latency: `-5.36%`
+- Sequential p95 latency: `-2.74%`
+- Concurrent avg latency: `-45.14%`
+- Concurrent p95 latency: `-40.19%`
+- Throughput (RPS): `+82.43%`
 
-### Run A (로컬 루프백)
-- 명령: `npm run perf:collect`
-- target: `http://127.0.0.1:3000/promos?limit=50`
-- sequential: avg 1.33ms / p95 1.51ms
-- concurrent: avg 5.58ms / p95 8.06ms / rps 2951.79
-- output: `test-results/perf/api-perf-2026-02-20T06-53-52-484Z.json`
-
-### Run B (외부 HTTPS 실측, 클라이언트=개발 PC)
-- 명령: `PERF_BASE_URL=https://165.232.168.243.nip.io npm run perf:collect`
-- target: `https://165.232.168.243.nip.io/promos?limit=50`
-- sequential: avg 357.08ms / p95 465.85ms
-- concurrent: avg 642.08ms / p95 1010.28ms / rps 25.94
-- output: `test-results/perf/api-perf-2026-02-20T06-54-36-719Z.json`
-- 주의: 이 값은 네트워크 구간이 포함된 E2E 체감 지표이며, 서버 내부 측정과 분리해서 봐야 한다.
-
-## 개선 후 기록 (채우기)
-| 항목 | Baseline | After | 개선율 |
-|---|---:|---:|---:|
-| avg latency (external) | 115.8ms | - | - |
-| p95 latency (external) | 126.5ms | - | - |
-| throughput (RPS) | 29.7 | - | - |
-| error rate | - | - | - |
-
-## 근거 파일
-- raw 결과: `test-results/perf/api-perf-*.json`
-- 개선 설명: `docs/performance-storyline.md`
-- 실행 가이드: `docs/performance-bmad-playbook.md`
+## Notes
+- This optimization is strongest for repeated identical list queries (`brand + promoType + q + sort`) during burst traffic.
+- Cache is cleared after successful `POST /v1/admin/scrape`.
+- Future step: add cache hit ratio metric to `/v1/meta/refresh` for long-run production tracking.
