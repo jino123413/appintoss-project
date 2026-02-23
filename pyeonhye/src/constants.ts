@@ -5,6 +5,8 @@ export const AD_GROUP_ID = rawAdGroupId && rawAdGroupId.length > 0
   ? rawAdGroupId
   : 'ait.v2.live.012aa2a0d0b84229';
 
+export const BANNER_AD_GROUP_ID = 'ait.v2.live.d2bc50b320b94637';
+
 export const BOOKMARK_STORAGE_KEY = 'pyeonhye:bookmarks';
 
 const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() || 'https://165.232.168.243.nip.io';

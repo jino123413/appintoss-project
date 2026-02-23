@@ -1,9 +1,11 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import BannerAd from './components/BannerAd';
 import { DeviceViewport } from './components/DeviceViewport';
 import { useInterstitialAd, useJsonStorage } from './hooks';
 import {
   AD_GROUP_ID,
   API_BASE_URL,
+  BANNER_AD_GROUP_ID,
   BOOKMARK_STORAGE_KEY,
   BRAND_TABS,
   MAIN_TABS,
@@ -779,6 +781,12 @@ export default function App() {
                 />
               ))
             )}
+          </section>
+        ) : null}
+
+        {!loading && !error ? (
+          <section className="mt-4" data-testid="banner-ad-section">
+            <BannerAd adGroupId={BANNER_AD_GROUP_ID} />
           </section>
         ) : null}
       </main>
