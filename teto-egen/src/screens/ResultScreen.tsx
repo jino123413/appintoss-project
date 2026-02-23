@@ -1,4 +1,5 @@
 ﻿import React from 'react';
+import { BannerAd } from '../components';
 import type { AnalysisResult, Tendency } from '../types';
 
 interface ResultScreenProps {
@@ -130,6 +131,8 @@ export function ResultScreen({
           </div>
         </article>
       )}
+
+      <BannerAd adGroupId="ait.v2.live.d3c12fc6a7d34c35" />
 
       <button
         type="button"
